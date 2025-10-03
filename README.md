@@ -1,2 +1,2 @@
-# vimicii
+# vimscii
 Open  image in classic vim without any backend (using ASCII)
