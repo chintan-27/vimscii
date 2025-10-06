@@ -22,7 +22,7 @@ No plugins, no GUI, no dependencies.
 ```bash
 # Install the converter script
 mkdir -p ~/.local/bin
-wget -O ~/.local/bin/img2text.py https://raw.githubusercontent.com/<your-username>/vimicii/main/img2text.py
+wget -O ~/.local/bin/img2text.py https://raw.githubusercontent.com/chintan-27/vimicii/main/img2text.py
 chmod +x ~/.local/bin/img2text.py
 
 # Add minimal Vim integration
@@ -65,7 +65,7 @@ EOF
 ```powershell
 # Install the script
 New-Item -ItemType Directory -Force $env:USERPROFILE\vimicii | Out-Null
-Invoke-WebRequest https://raw.githubusercontent.com/<your-username>/vimicii/main/img2text.py -OutFile $env:USERPROFILE\vimicii\img2text.py
+Invoke-WebRequest https://raw.githubusercontent.com/chintan-27/vimicii/main/img2text.py -OutFile $env:USERPROFILE\vimicii\img2text.py
 
 # Add a small Vim plugin (PowerShell syntax)
 $pluginDir = "$env:USERPROFILE\vimfiles\plugin"
