@@ -32,6 +32,7 @@ endfunction
 function! s:BuildCmd(src, mode, ramp, width, height, color, cmode, gamma, charaspect, natural) abort
   let cmd = 'python3 ' . shellescape(g:img2text_cmd) . ' ' . shellescape(a:src)
   let cmd .= ' --mode ' . a:mode
+
   if a:mode =~# '^\%(ascii\|blocks\)$' && !empty(a:ramp)
     let cmd .= ' --ramp ' . shellescape(a:ramp)
   endif
@@ -44,9 +45,13 @@ function! s:BuildCmd(src, mode, ramp, width, height, color, cmode, gamma, charas
   if a:color
     let cmd .= ' --color --color-mode ' . a:cmode
   endif
-  if a:gamma !=# '' && a:gamma !=# 1.0
-    let cmd .= ' --gamma ' . a:gamma
+
+  " ---- FIX: compare gamma as string, not Float
+  let gstr = string(a:gamma)
+  if gstr !=# '' && gstr !=# '1.0' && gstr !=# '1'
+    let cmd .= ' --gamma ' . gstr
   endif
+
   if a:charaspect !=# ''
     let cmd .= ' --char-aspect ' . a:charaspect
   endif
