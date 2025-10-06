@@ -4,7 +4,7 @@
 
 ---
 
-## 📦 Requirements
+## Requirements
 
 - **Python 3** (must be available as `python3`)
 - **Vim 8.0+** (tested with Vim 9.1)
@@ -18,9 +18,9 @@ Supported image formats:
 
 ---
 
-## ⚙️ Installation
+## Installation
 
-### 🐧 Linux
+### Linux
 ```bash
 # Install Python (if not already)
 sudo apt install -y python3 wget
@@ -40,7 +40,7 @@ grep -q 'set packpath^=~/.vim' ~/.vimrc 2>/dev/null || echo 'set packpath^=~/.vi
 
 ---
 
-### 🍎 macOS
+### macOS
 
 ```bash
 # Install Python if needed
@@ -60,7 +60,7 @@ grep -q 'set packpath^=~/.vim' ~/.vimrc 2>/dev/null || echo 'set packpath^=~/.vi
 
 ---
 
-### 🪟 Windows (PowerShell)
+### Windows (PowerShell)
 
 ```powershell
 # Create folders
@@ -77,7 +77,7 @@ Add-Content "$env:USERPROFILE\_vimrc" 'set packpath^=~/.vim'
 
 ---
 
-## 🖼️ Usage
+## Usage
 
 ### Open an image directly
 
@@ -133,7 +133,7 @@ Vim automatically:
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 You can override defaults in your `~/.vimrc`:
 
@@ -147,7 +147,7 @@ let g:vimscii_default_natural = 0           " 1 = show original scale
 
 ---
 
-## 🧠 Examples
+## Examples
 
 **Simple ASCII render:**
 
@@ -175,7 +175,7 @@ vi image.png
 
 ---
 
-## 🧩 Command-line example
+## Command-line example
 
 You can use the converter standalone too:
 
@@ -185,7 +185,7 @@ python3 ~/.local/bin/img2text.py image.png --mode braille --width 100 --color
 
 ---
 
-## 🧰 Notes
+## Notes
 
 * Works completely offline (pure Python).
 * No Pillow or external libraries — uses only Python stdlib.
@@ -194,7 +194,7 @@ python3 ~/.local/bin/img2text.py image.png --mode braille --width 100 --color
 
 ---
 
-## 📜 License
+## License
 
 ```
 MIT License
