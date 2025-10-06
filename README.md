@@ -1,203 +1,222 @@
 # vimscii
-View images directly inside Vim/Neovim — ASCII, Braille, and block characters — using only Python’s standard library.
 
-`vimscii` converts PNG/BMP/PPM/PGM into text art and shows it in a scratch buffer. No GUI, no external libraries.
-
----
-
-## Features
-- Works in plain Vim or Neovim (even over SSH).
-- Modes: `braille`, `half`, `ascii`, `blocks`.
-- Optional 24-bit color (`--color`, with `--color-mode auto|fg|bg`).
-- Pure Python, single file, no dependencies.
+**View images directly in classic Vim**, converted to ASCII, Braille, or Block art — no GUI, no plugins, no external dependencies.
 
 ---
 
-## Installation
+## 📦 Requirements
 
-> Replace the GitHub URL if your repository path differs.
+- **Python 3** (must be available as `python3`)
+- **Vim 8.0+** (tested with Vim 9.1)
+- UTF-8 capable terminal (for Braille and blocks)
+- Monospaced font recommended
 
-### Linux / macOS (Vim)
+Supported image formats:
+- PNG (8-bit non-interlaced)
+- BMP (24/32-bit)
+- PPM / PGM (binary P6 / P5)
 
+---
+
+## ⚙️ Installation
+
+### 🐧 Linux
 ```bash
-# 1) Install the converter script
+# Install Python (if not already)
+sudo apt install -y python3 wget
+
+# Get the converter script
 mkdir -p ~/.local/bin
 wget -O ~/.local/bin/img2text.py https://raw.githubusercontent.com/chintan-27/vimscii/main/img2text.py
 chmod +x ~/.local/bin/img2text.py
 
-# 2) Install the Vim plugin (defines :Img and :ImgWith)
+# Add Vim plugin
 mkdir -p ~/.vim/pack/plugins/start/vimscii
-cat > ~/.vim/pack/plugins/start/vimscii/plugin.vim <<'EOF'
-let g:img2text_cmd = expand('~/.local/bin/img2text.py')
+wget -O ~/.vim/pack/plugins/start/vimscii/plugin.vim https://raw.githubusercontent.com/chintan-27/vimscii/main/plugin.vim
 
-function! s:ImgRun(mode, ramp, file) abort
-  botright new
-  setlocal buftype=nofile bufhidden=wipe noswapfile nowrap nonumber norelativenumber
-  let l:w = max(1, winwidth(0) - 1)
-  let l:f = !empty(a:file) ? a:file : expand('%:p')
-  if empty(l:f) || !filereadable(l:f)
-    echohl ErrorMsg | echom "Img: no readable file" | echohl None | bwipeout! | return
-  endif
-  let l:cmd = 'python3 ' . shellescape(g:img2text_cmd) . ' ' . shellescape(l:f)
-  let l:cmd .= ' --mode ' . a:mode . ' --width ' . l:w
-  if a:mode =~# '^\%(ascii\|blocks\)$' && !empty(a:ramp)
-    let l:cmd .= ' --ramp ' . shellescape(a:ramp)
-  endif
-  execute '0read !' . l:cmd
-  normal! gg
-  execute 'file [Image:' . a:mode . ']'
-endfunction
-
-command! -nargs=? Img call s:ImgRun('braille', '', <q-args>)
-command! -nargs=* ImgWith call s:ImgWith(<q-args>)
-function! s:ImgWith(args) abort
-  let l:parts = split(a:args)
-  let l:mode  = len(l:parts) > 0 ? l:parts[0] : 'braille'
-  let l:ramp  = (l:mode ==# 'ascii' || l:mode ==# 'blocks') && len(l:parts) > 1 ? l:parts[1] : ''
-  let l:file  = (l:mode ==# 'ascii' || l:mode ==# 'blocks') ? (len(l:parts) > 2 ? l:parts[2] : '') : (len(l:parts) > 1 ? l:parts[1] : '')
-  call s:ImgRun(l:mode, l:ramp, l:file)
-endfunction
-
-" Auto-render supported image types on open
-augroup vimscii_autorender
-  autocmd!
-  autocmd BufReadPost *.png,*.bmp,*.ppm,*.pgm Img
-augroup END
-EOF
-
-# 3) Ensure Vim loads user packages
-grep -q 'set packpath^=~/.vim' ~/.vimrc || echo 'set packpath^=~/.vim' >> ~/.vimrc
+# Ensure Vim loads from ~/.vim
+grep -q 'set packpath^=~/.vim' ~/.vimrc 2>/dev/null || echo 'set packpath^=~/.vim' >> ~/.vimrc
 ````
 
-### Linux / macOS (Neovim)
+---
+
+### 🍎 macOS
 
 ```bash
-# 1) Use the same script
+# Install Python if needed
+brew install python wget
+
+# Fetch the converter and plugin
 mkdir -p ~/.local/bin
 wget -O ~/.local/bin/img2text.py https://raw.githubusercontent.com/chintan-27/vimscii/main/img2text.py
 chmod +x ~/.local/bin/img2text.py
 
-# 2) Neovim package path
-mkdir -p ~/.local/share/nvim/site/pack/plugins/start/vimscii
-cat > ~/.local/share/nvim/site/pack/plugins/start/vimscii/plugin.vim <<'EOF'
-let g:img2text_cmd = expand('~/.local/bin/img2text.py')
+mkdir -p ~/.vim/pack/plugins/start/vimscii
+wget -O ~/.vim/pack/plugins/start/vimscii/plugin.vim https://raw.githubusercontent.com/chintan-27/vimscii/main/plugin.vim
 
-function! s:ImgRun(mode, ramp, file) abort
-  botright new
-  setlocal buftype=nofile bufhidden=wipe noswapfile nowrap nonumber norelativenumber
-  let l:w = max(1, winwidth(0) - 1)
-  let l:f = !empty(a:file) ? a:file : expand('%:p')
-  if empty(l:f) || !filereadable(l:f)
-    echohl ErrorMsg | echom "Img: no readable file" | echohl None | bwipeout! | return
-  endif
-  let l:cmd = 'python3 ' . shellescape(g:img2text_cmd) . ' ' . shellescape(l:f)
-  let l:cmd .= ' --mode ' . a:mode . ' --width ' . l:w
-  if a:mode =~# '^\%(ascii\|blocks\)$' && !empty(a:ramp)
-    let l:cmd .= ' --ramp ' . shellescape(a:ramp)
-  endif
-  execute '0read !' . l:cmd
-  normal! gg
-  execute 'file [Image:' . a:mode . ']'
-endfunction
-
-command! -nargs=? Img call s:ImgRun('braille', '', <q-args>)
-command! -nargs=* ImgWith call s:ImgWith(<q-args>)
-function! s:ImgWith(args) abort
-  let l:parts = split(a:args)
-  let l:mode  = len(l:parts) > 0 ? l:parts[0] : 'braille'
-  let l:ramp  = (l:mode ==# 'ascii' || l:mode ==# 'blocks') && len(l:parts) > 1 ? l:parts[1] : ''
-  let l:file  = (l:mode ==# 'ascii' || l:mode ==# 'blocks') ? (len(l:parts) > 2 ? l:parts[2] : '') : (len(l:parts) > 1 ? l:parts[1] : '')
-  call s:ImgRun(l:mode, l:ramp, l:file)
-endfunction
-
-augroup vimscii_autorender
-  autocmd!
-  autocmd BufReadPost *.png,*.bmp,*.ppm,*.pgm Img
-augroup END
-EOF
-```
-
-### Windows (PowerShell, Vim)
-
-```powershell
-# 1) Script
-New-Item -ItemType Directory -Force $env:USERPROFILE\bin | Out-Null
-Invoke-WebRequest https://raw.githubusercontent.com/chintan-27/vimscii/main/img2text.py -OutFile $env:USERPROFILE\bin\img2text.py
-
-# 2) Vim plugin (vimfiles path on Windows)
-$pluginDir = "$env:USERPROFILE\vimfiles\plugin"
-New-Item -ItemType Directory -Force $pluginDir | Out-Null
-@"
-let g:img2text_cmd = expand('$env:USERPROFILE/bin/img2text.py')
-command! -nargs=? Img execute 'new | setlocal buftype=nofile bufhidden=wipe noswapfile nowrap | 0read !python ' . shellescape(g:img2text_cmd) . ' ' . shellescape(expand("<args>"))
-"@ | Set-Content "$pluginDir\vimscii.vim"
+# Ensure ~/.vim is in Vim's packpath
+grep -q 'set packpath^=~/.vim' ~/.vimrc 2>/dev/null || echo 'set packpath^=~/.vim' >> ~/.vimrc
 ```
 
 ---
 
-## Usage
+### 🪟 Windows (PowerShell)
 
-Open an image and it auto-renders (Vim/Neovim):
+```powershell
+# Create folders
+mkdir "$env:USERPROFILE\.local\bin" -Force
+mkdir "$env:USERPROFILE\.vim\pack\plugins\start\vimscii" -Force
+
+# Download files
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/chintan-27/vimscii/main/img2text.py" -OutFile "$env:USERPROFILE\.local\bin\img2text.py"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/chintan-27/vimscii/main/plugin.vim" -OutFile "$env:USERPROFILE\.vim\pack\plugins\start\vimscii\plugin.vim"
+
+# Ensure packpath
+Add-Content "$env:USERPROFILE\_vimrc" 'set packpath^=~/.vim'
+```
+
+---
+
+## 🖼️ Usage
+
+### Open an image directly
 
 ```bash
 vi image.png
 ```
 
-Manual commands (inside Vim/Neovim):
+Vim automatically:
 
-```
-:Img                          " render current file (braille)
-:Img path/to/image.png        " render a path
-:ImgWith ascii dense          " ascii mode with dense ramp
-:ImgWith blocks blocks        " block shades
-:ImgWith half                 " half-block mode
+* Converts it to **ASCII**
+* Fits width ≈ 120 columns (height fits window)
+* Shows grayscale (no color)
+* Replaces the current buffer (no split)
+
+---
+
+### Manual commands (inside Vim)
+
+#### Default render
+
+```vim
+:ImgHere
 ```
 
-Command line:
+#### Advanced control (same as Python CLI)
+
+```vim
+:ImgHereArgs --mode braille --width 100
+:ImgHereArgs --mode half --color --width 120
+:ImgHereArgs --mode ascii --ramp blocks --width 120
+:ImgHereArgs --mode braille --natural
+```
+
+#### Supported modes
+
+| Mode      | Description                        |
+| --------- | ---------------------------------- |
+| `ascii`   | Uses ASCII density ramp (default)  |
+| `blocks`  | Uses ░▒▓█ shades                   |
+| `half`    | Uses half-block vertical pairs     |
+| `braille` | 2×4 pixel-per-cell for high detail |
+
+#### Common flags
+
+| Flag                       | Purpose                                       |       |                    |
+| -------------------------- | --------------------------------------------- | ----- | ------------------ |
+| `--width N` / `--height N` | Resize to fit                                 |       |                    |
+| `--natural`                | Render at native resolution                   |       |                    |
+| `--color`                  | Enable color                                  |       |                    |
+| `--color-mode fg           | bg                                            | auto` | Choose color style |
+| `--ramp`                   | Choose character ramp (dense, sparse, blocks) |       |                    |
+| `--gamma`                  | Adjust brightness (default: 1.0)              |       |                    |
+
+---
+
+## 🔧 Configuration
+
+You can override defaults in your `~/.vimrc`:
+
+```vim
+let g:vimscii_default_mode = 'ascii'        " 'ascii', 'braille', 'blocks', 'half'
+let g:vimscii_default_width = 120
+let g:vimscii_default_color = 0             " 0 = grayscale, 1 = color
+let g:vimscii_default_ramp = 'dense'
+let g:vimscii_default_natural = 0           " 1 = show original scale
+```
+
+---
+
+## 🧠 Examples
+
+**Simple ASCII render:**
 
 ```bash
-python3 img2text.py image.png --mode braille --width 100 --color
-python3 img2text.py image.png --mode ascii --ramp dense --width 120 --color
-python3 img2text.py image.png --mode blocks --ramp blocks --width 100 --color --color-mode bg
-python3 img2text.py image.png --mode half --width 120 --color --color-mode auto
+vi image.png
+```
+
+**Colored Braille mode (manual):**
+
+```vim
+:ImgHereArgs --mode braille --color --width 100
+```
+
+**Original scale:**
+
+```vim
+:ImgHereArgs --mode ascii --natural
+```
+
+**Blocks with shading:**
+
+```vim
+:ImgHereArgs --mode blocks --ramp blocks --width 110
 ```
 
 ---
 
-## Tips
+## 🧩 Command-line example
 
-* Ensure truecolor support:
+You can use the converter standalone too:
 
-  ```bash
-  printf "\x1b[38;2;255;0;0mRED \x1b[38;2;0;255;0mGREEN \x1b[38;2;0;0;255mBLUE\x1b[0m\n"
-  ```
-* tmux:
-
-  ```
-  set -g default-terminal "tmux-256color"
-  set -as terminal-features ',xterm-256color:RGB'
-  ```
-* Vim/Neovim:
-
-  ```
-  :set termguicolors
-  ```
-* PNGs must be non-interlaced (Adam7 isn’t supported). Re-save if needed:
-
-  * macOS: `sips -s format png image.png --out fixed.png`
-  * ImageMagick: `convert image.png -interlace none fixed.png`
+```bash
+python3 ~/.local/bin/img2text.py image.png --mode braille --width 100 --color
+```
 
 ---
 
-## Troubleshooting
+## 🧰 Notes
 
-* `E492: Not an editor command: Img`
-  Run `:scriptnames` and confirm a line ends with `vimscii/plugin.vim`.
-  For Vim, ensure `set packpath^=~/.vim` is in `~/.vimrc`.
-  For Neovim, the plugin must be under `~/.local/share/nvim/site/pack/...`.
+* Works completely offline (pure Python).
+* No Pillow or external libraries — uses only Python stdlib.
+* Make sure your terminal uses a **monospaced font** and **UTF-8 encoding**.
+* Bright or dark terminals may require tweaking `--gamma`.
 
 ---
 
-## License
+## 📜 License
 
-MIT
+```
+MIT License
+
+Copyright (c) 2025 Chintan Acharya
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+```
+
