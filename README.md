@@ -1,7 +1,7 @@
-# vimicii
+# vimscii
 View images directly inside Vim — using only Python and text.
 
-`vimicii` converts images (PNG, BMP, PPM/PGM) into ASCII, Braille, or block characters — displayed directly in your terminal Vim or Neovim.  
+`vimscii` converts images (PNG, BMP, PPM/PGM) into ASCII, Braille, or block characters — displayed directly in your terminal Vim or Neovim.  
 No plugins, no GUI, no dependencies.
 
 ---
@@ -22,12 +22,12 @@ No plugins, no GUI, no dependencies.
 ```bash
 # Install the converter script
 mkdir -p ~/.local/bin
-wget -O ~/.local/bin/img2text.py https://raw.githubusercontent.com/chintan-27/vimicii/main/img2text.py
+wget -O ~/.local/bin/img2text.py https://raw.githubusercontent.com/chintan-27/vimscii/main/img2text.py
 chmod +x ~/.local/bin/img2text.py
 
 # Add minimal Vim integration
-mkdir -p ~/.vim/pack/plugins/start/vimicii
-cat > ~/.vim/pack/plugins/start/vimicii/plugin.vim <<'EOF'
+mkdir -p ~/.vim/pack/plugins/start/vimscii
+cat > ~/.vim/pack/plugins/start/vimscii/plugin.vim <<'EOF'
 let g:img2text_cmd = expand('~/.local/bin/img2text.py')
 
 function! s:ImgRun(mode, ramp, file) abort
@@ -64,16 +64,16 @@ EOF
 
 ```powershell
 # Install the script
-New-Item -ItemType Directory -Force $env:USERPROFILE\vimicii | Out-Null
-Invoke-WebRequest https://raw.githubusercontent.com/chintan-27/vimicii/main/img2text.py -OutFile $env:USERPROFILE\vimicii\img2text.py
+New-Item -ItemType Directory -Force $env:USERPROFILE\vimscii | Out-Null
+Invoke-WebRequest https://raw.githubusercontent.com/chintan-27/vimscii/main/img2text.py -OutFile $env:USERPROFILE\vimscii\img2text.py
 
 # Add a small Vim plugin (PowerShell syntax)
 $pluginDir = "$env:USERPROFILE\vimfiles\plugin"
 New-Item -ItemType Directory -Force $pluginDir | Out-Null
 @"
-let g:img2text_cmd = expand('$env:USERPROFILE/vimicii/img2text.py')
+let g:img2text_cmd = expand('$env:USERPROFILE/vimscii/img2text.py')
 command! -nargs=? Img execute '!python ' . shellescape(g:img2text_cmd) . ' ' . shellescape(expand("<args>"))
-"@ | Set-Content "$pluginDir\vimicii.vim"
+"@ | Set-Content "$pluginDir\vimscii.vim"
 ```
 
 ---
