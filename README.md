@@ -170,7 +170,5 @@ vi photo.png       # opens photo.png as ASCII art
 
 MIT License — open for modification and reuse.
 
-```
 
----
 
