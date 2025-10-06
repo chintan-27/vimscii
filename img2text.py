@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-img2text.py — View images as ASCII/Braille/Blocks in terminal (great for Vim).
+img2text.py — View images as ASCII / Braille / Blocks in terminal (great for Vim).
 Pure Python (stdlib only). No external packages.
 
 Supported formats:
@@ -15,9 +15,16 @@ Render modes:
 
 Color:
   --color enables 24-bit ANSI. Use --color-mode auto|fg|bg (default: auto).
+
+Sizing:
+  - Use --width/--height to fit a window.
+  - Use --natural to render at the image’s “natural” cell size for the chosen mode:
+      ascii/blocks: width=w, height=h
+      half:         width=w, height=ceil(h/2)
+      braille:      width=ceil(w/2), height=ceil(h/4)
 """
 
-import sys, os, struct, zlib, shutil, argparse
+import sys, os, struct, zlib, shutil, argparse, math
 
 RESET = "\x1b[0m"
 
@@ -323,11 +330,15 @@ def load_image(p):
 
 
 # ---------------- Scaling to “text cells” ----------------
-def scale_to_cells(img, mode, width_cells=None, height_cells=None, char_aspect=None):
+def scale_to_cells(img, mode, width_cells=None, height_cells=None,
+                   char_aspect=None, natural=False):
     """
     Convert desired *cell* grid into a pixel resize for the renderer.
     For ASCII/blocks, characters are ~2:1 tall:wide → char_aspect ~= 0.5.
     Braille (2x4) and half (1x2) already encode multiple pixels per cell.
+
+    If natural=True, ignore width/height and return the image scaled so that
+    one cell represents the native cluster size for the mode.
     """
     w, h = img.size
 
@@ -339,6 +350,19 @@ def scale_to_cells(img, mode, width_cells=None, height_cells=None, char_aspect=N
         pxw, pxh = 1, 1
         eff = 0.5 if char_aspect is None else float(char_aspect)
 
+    if natural:
+        if mode == "braille":
+            width_cells  = math.ceil(w / 2)
+            height_cells = math.ceil(h / 4)
+        elif mode == "half":
+            width_cells  = w
+            height_cells = (h + 1) // 2
+        else:  # ascii/blocks
+            width_cells, height_cells = w, h
+        tw, th = max(1, width_cells * pxw), max(1, height_cells * pxh)
+        return img.resize_nn(tw, th), width_cells, height_cells
+
+    # Fit-to-window behavior
     if width_cells is None and height_cells is None:
         width_cells = max(1, shutil.get_terminal_size((80,24)).columns - 2)
 
@@ -353,9 +377,10 @@ def scale_to_cells(img, mode, width_cells=None, height_cells=None, char_aspect=N
 
 # ---------------- Renderers ----------------
 def render_blocks(img, width=None, height=None, ramp="ascii", gamma=1.0,
-                  color=False, color_mode="auto", char_aspect=None):
+                  color=False, color_mode="auto", char_aspect=None, natural=False):
     ramp_str = RAMPS.get(ramp, ramp)
-    img, cells_w, cells_h = scale_to_cells(img, "blocks", width, height, char_aspect=char_aspect)
+    img, cells_w, cells_h = scale_to_cells(img, "blocks", width, height,
+                                           char_aspect=char_aspect, natural=natural)
     w, h = img.size
     px = img.buf
     out = []
@@ -390,8 +415,8 @@ def render_blocks(img, width=None, height=None, ramp="ascii", gamma=1.0,
 
 
 def render_half(img, width=None, height=None, gamma=1.0,
-                color=False, color_mode="auto"):
-    img, cells_w, cells_h = scale_to_cells(img, "half", width, height)
+                color=False, color_mode="auto", natural=False):
+    img, cells_w, cells_h = scale_to_cells(img, "half", width, height, natural=natural)
     w, h = img.size
     px = img.buf
     out = []
@@ -441,8 +466,8 @@ BRAILLE_BASE = 0x2800
 BRAILLE_BITS = [(0,0,1),(0,1,2),(0,2,3),(0,3,7),(1,0,4),(1,1,5),(1,2,6),(1,3,8)]
 
 def render_braille(img, width=None, height=None, gamma=1.0,
-                   color=False, color_mode="auto"):
-    img, cells_w, cells_h = scale_to_cells(img, "braille", width, height)
+                   color=False, color_mode="auto", natural=False):
+    img, cells_w, cells_h = scale_to_cells(img, "braille", width, height, natural=natural)
     w, h = img.size
     px = img.buf
     out = []
@@ -493,17 +518,19 @@ def parse_args(argv):
                     help="color strategy when --color is set (default: auto)")
     ap.add_argument("--char-aspect", type=float, default=None,
                     help="override ASCII/blocks character aspect (default ~0.5)")
+    ap.add_argument("--natural", action="store_true",
+                    help="render at image's natural cell size for the chosen mode (may be large)")
     return ap.parse_args(argv)
 
 def main():
     a = parse_args(sys.argv[1:])
     img = load_image(a.image)
     if a.mode == "braille":
-        out = render_braille(img, a.width, a.height, a.gamma, a.color, a.color_mode)
+        out = render_braille(img, a.width, a.height, a.gamma, a.color, a.color_mode, a.natural)
     elif a.mode == "half":
-        out = render_half(img, a.width, a.height, a.gamma, a.color, a.color_mode)
+        out = render_half(img, a.width, a.height, a.gamma, a.color, a.color_mode, a.natural)
     else:  # ascii/blocks
-        out = render_blocks(img, a.width, a.height, a.ramp, a.gamma, a.color, a.color_mode, a.char_aspect)
+        out = render_blocks(img, a.width, a.height, a.ramp, a.gamma, a.color, a.color_mode, a.char_aspect, a.natural)
     print(out)
 
 if __name__ == "__main__":
